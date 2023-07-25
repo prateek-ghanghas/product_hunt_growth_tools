@@ -38,8 +38,8 @@ for ref in refrences:
             'query': 'query PostPageSocialProof($postId:ID!$limit:Int!){post(id:$postId){id contributors(limit:$limit){role user{id ...UserImage __typename}__typename}__typename}}fragment UserImage on User{id name username avatarUrl __typename}',
                  }
       res = requests.post('https://www.producthunt.com/frontend/graphql', json=json_data)
-      res = r.json()
-      upvoters_data = r["data"]["post"]["contributors"]
+      res = res.json()
+      upvoters_data = res["data"]["post"]["contributors"]
       names_list = []
       upvote_dic = {}
       upvote_maindic = {}
