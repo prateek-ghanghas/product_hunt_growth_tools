@@ -33,7 +33,6 @@ headers = {
             'accept-language': 'en-US,en;q=0.9',
             'content-type': 'application/json',
             'origin': 'https://www.producthunt.com',
-            'referer': 'https://www.producthunt.com/@cyriljeet',
             'sec-ch-ua': '"Not/A)Brand";v="99", "Google Chrome";v="115", "Chromium";v="115"',
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"',
@@ -69,6 +68,173 @@ def get_commentor_info_for_product_id(product_id: int)-> list:
                       upvote_and_commenters_list.append(dict["user"]["name"])
         print(upvote_and_commenters_list)
 
+def follow_persons_followers(person_username: string)->bool :
+            '''
+            This function follows all the followers of a person by taking
+            his username a a param.
+            :param person_username: sample: alicea_hughes
+            :return Bool values: sample: True or False
+            '''
+    id_lst = []
+    json_data = {
+        'operationName': 'ProfileFollowersQuery',
+        'variables': {
+            'username': person_username,
+            'cursor': None,
+            'query': '',
+        },
+        'query': 'query ProfileFollowersQuery($username:String!$cursor:String){profile:user(username:$username){id followersCount followers(first:20 after:$cursor){edges{node{id ...UserItemFragment __typename}__typename}pageInfo{endCursor hasNextPage __typename}__typename}...MetaTags __typename}}fragment MetaTags on SEOInterface{id meta{canonicalUrl creator description image mobileAppUrl oembedUrl robots title type author authorUrl __typename}__typename}fragment UserItemFragment on User{id name headline username followersCount ...UserImage ...UserFollowButtonFragment __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment UserImage on User{id name username avatarUrl __typename}',
+    }
+
+    first_response = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+
+    first_response = first_response.json()
+
+    first_followers = first_response["data"]["profile"]["followers"]["edges"]
+    end_cursor = first_response["data"]["profile"]["followers"]["pageInfo"]["endCursor"]
+    next_page = first_response["data"]["profile"]["followers"]["pageInfo"]["hasNextPage"]
+
+    for nodes in first_followers:
+          id_lst.append(nodes["node"]["id"])
+
+    while(next_page == True):
+              json_data = {
+                'operationName': 'ProfileFollowersQuery',
+                'variables': {
+                    'username': person_username,
+                    'cursor': end_cursor,
+                    'query': '',
+                },
+                'query': 'query ProfileFollowersQuery($username:String!$cursor:String){profile:user(username:$username){id followersCount followers(first:20 after:$cursor){edges{node{id ...UserItemFragment __typename}__typename}pageInfo{endCursor hasNextPage __typename}__typename}...MetaTags __typename}}fragment MetaTags on SEOInterface{id meta{canonicalUrl creator description image mobileAppUrl oembedUrl robots title type author authorUrl __typename}__typename}fragment UserItemFragment on User{id name headline username followersCount ...UserImage ...UserFollowButtonFragment __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment UserImage on User{id name username avatarUrl __typename}',
+            }
+
+              response = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+
+              response = response.json()
+
+              followers = response["data"]["profile"]["followers"]["edges"]
+
+              end_cursor = response["data"]["profile"]["followers"]["pageInfo"]["endCursor"]
+
+              next_page = response["data"]["profile"]["followers"]["pageInfo"]["hasNextPage"]
+
+              for nodes in followers:
+                    id_lst.append(nodes["node"]["id"])
+
+    df = pd.DataFrame(id_lst, columns = ["person id"])
+
+
+    df.to_csv("person_followers_ids", index = False)
+
+    df = pd.read_csv("person_followers_ids")
+
+    follow_count = 0
+
+    while(True):
+
+        for i,r in df.iterrows():
+            time.sleep(5)
+            if(follow_a_person(int(r["person id"]))):
+                    follow_count += 1
+                    df = df.drop(i)
+            else:
+                    break
+        if (df.empty):
+              print("All followers are followed")
+              os.remove("person_followers_ids")
+              return True
+        df.to_csv("person_followers_ids",index = False)
+        print("followed count: ",follow_count)
+        print("wait before start following again: 1 Hr")
+        time.sleep(3600)
+        df = pd.read_csv("person_followers_ids")
+    return False            
+
+
+def follow_persons_followings(person_username: string)->bool :
+            '''
+            This function follows all the followings of a person by taking
+            his username a a param.
+            :param person_username: sample: alicea_hughes
+            :return Bool values: sample: True or False
+            '''  
+    id_lst = []        
+    json_data = {
+    'operationName': 'ProfileFollowingQuery',
+    'variables': {
+        'username': person_username,
+        'cursor': None,
+        'query': '',
+    },
+    'query': 'query ProfileFollowingQuery($username:String!$cursor:String){profile:user(username:$username){id isTrashed followingsCount following(first:20 after:$cursor){edges{node{id ...UserItemFragment __typename}__typename}pageInfo{endCursor hasNextPage __typename}__typename}...MetaTags __typename}}fragment MetaTags on SEOInterface{id meta{canonicalUrl creator description image mobileAppUrl oembedUrl robots title type author authorUrl __typename}__typename}fragment UserItemFragment on User{id name headline username followersCount ...UserImage ...UserFollowButtonFragment __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment UserImage on User{id name username avatarUrl __typename}',
+}
+
+    first_response = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+
+    first_response = first_response.json()
+
+    first_followings = first_response["data"]["profile"]["following"]["edges"]
+    end_cursor = first_response["data"]["profile"]["following"]["pageInfo"]["endCursor"]
+    next_page = first_response["data"]["profile"]["following"]["pageInfo"]["hasNextPage"]
+
+    for nodes in first_followings:
+            id_lst.append(nodes["node"]["id"])
+
+    while(next_page == True):
+        json_data = {
+        'operationName': 'ProfileFollowingQuery',
+        'variables': {
+            'username': 'alicea_hughes',
+            'cursor': end_cursor,
+            'query': '',
+        },
+        'query': 'query ProfileFollowingQuery($username:String!$cursor:String){profile:user(username:$username){id isTrashed followingsCount following(first:20 after:$cursor){edges{node{id ...UserItemFragment __typename}__typename}pageInfo{endCursor hasNextPage __typename}__typename}...MetaTags __typename}}fragment MetaTags on SEOInterface{id meta{canonicalUrl creator description image mobileAppUrl oembedUrl robots title type author authorUrl __typename}__typename}fragment UserItemFragment on User{id name headline username followersCount ...UserImage ...UserFollowButtonFragment __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment UserImage on User{id name username avatarUrl __typename}',
+    }
+
+
+        response = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+
+        response = response.json()
+
+        followings = response["data"]["profile"]["following"]["edges"]
+
+        end_cursor = response["data"]["profile"]["following"]["pageInfo"]["endCursor"]
+
+        next_page = response["data"]["profile"]["following"]["pageInfo"]["hasNextPage"]
+
+        for nodes in followings:
+            id_lst.append(nodes["node"]["id"])
+    
+    df = pd.DataFrame(id_lst, columns = ["person id"])
+
+
+    df.to_csv('person_followings_ids.csv', index = False)
+
+    df = pd.read_csv('person_followings_ids.csv')
+
+    follow_count = 0
+
+    while(True):
+
+        for i,r in df.iterrows():
+            time.sleep(5)
+            if(follow_a_person(int(r["person id"]))):
+                    follow_count += 1
+                    df = df.drop(i)
+            else:
+                    break
+        if(df.empty):
+              print("All followings are followed")
+              os.remove('person_followings_ids.csv')
+              return True
+    
+        df.to_csv('person_followings_ids.csv',index = False)
+        print("followed count: ",follow_count,)
+        print("wait before start following again: 1 Hr")
+        time.sleep(3600)
+        df = pd.read_csv('person_followings_ids.csv')
+    return False            
+
 def follow_person_using_person_id(person_id: int)-> bool:
         
         """
@@ -99,13 +265,14 @@ def follow_person_using_person_id(person_id: int)-> bool:
             return False
         else:
             return True
-        
-        
-
-        
+                
 if __name__ == "__main__":
         product_id = int(input("Enter the product id: "))
         get_commentor_info_for_product_id(product_id)
         person_id = int(input("Enter person id: "))
         follow_person_with_person_id(person_id)
+        username = input("Enter the username: ")
+        follow_persons_followers(username)
+        follow_persons_followings(username)    
+            
         
