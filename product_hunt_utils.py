@@ -174,15 +174,8 @@ def follow_persons_followers(person_username: str,followersFilePath: str)->bool 
               for nodes in followers:
                     id_lst.append(nodes["node"]["id"])
 
-    df = pd.DataFrame(id_lst, columns = ["person id"])
 
-    df.to_csv(followersFilePath, index = False)
-
-    df = pd.read_csv(followersFilePath)
-
-    count = 0
-
-    return follow_now(df,count,followersFilePath)
+    return follow_list_of_ids(id_lst, followersFilePath)
 
 
 def follow_persons_followings(person_username: str, followingsFilePath: str)->bool :
@@ -242,15 +235,8 @@ def follow_persons_followings(person_username: str, followingsFilePath: str)->bo
         for nodes in followings:
             id_lst.append(nodes["node"]["id"])
 
-    df = pd.DataFrame(id_lst, columns = ["person id"])
 
-    df.to_csv(followingsFilePath, index = False)
-
-    df = pd.read_csv(followingsFilePath)
-
-    count = 0
-
-    return follow_now(df,count,followingsFilePath)
+    return follow_list_of_ids(id_lst, followingsFilePath)
 
 def follow_a_person(person_id):
 
@@ -281,16 +267,23 @@ def follow_a_person(person_id):
       else:
           return True
 
-def follow_now(df,count: int,filePath: str)->bool :
+def follow_list_of_ids(id_lst: list, filePath: str)->bool :
 
     '''
     This function follow all the persons by providing theirs ids which is done
     by passing a DataFrame which contain ids of those persons, it also take
     csv filepath as a param so that reading and writing in file can be done
     accordingly.
-    :param df,count,filepath: sample: DataFrame, 0, person_ids.csv
+    :param id_lst filepath: sample: [408087,593738,......], person_ids.csv
     :return boolean value: sample: True
     '''
+    df = pd.DataFrame(id_lst, columns = ["person id"])
+
+    df.to_csv(followersFilePath, index = False)
+
+    df = pd.read_csv(followersFilePath)
+
+    count = 0
 
     while(True):
 
