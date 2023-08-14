@@ -304,6 +304,112 @@ def follow_list_of_ids(id_lst: list, filePath: str)->bool :
         time.sleep(3600)
         df = pd.read_csv(filePath)
 
+def unfollow_non_followbacks(non_followback_filePath):
+
+
+        json_data = {
+            'operationName': 'ProfileFollowingQuery',
+            'variables': {
+                'username': 'prateek_ghanghas',
+                'cursor': None,
+                'query': '',
+            },
+            'query': 'query ProfileFollowingQuery($username:String!$cursor:String){profile:user(username:$username){id isTrashed followingsCount following(first:20 after:$cursor){edges{node{id ...UserItemFragment __typename}__typename}pageInfo{endCursor hasNextPage __typename}__typename}...MetaTags __typename}}fragment MetaTags on SEOInterface{id meta{canonicalUrl creator description image mobileAppUrl oembedUrl robots title type author authorUrl __typename}__typename}fragment UserItemFragment on User{id name headline username followersCount ...UserImage ...UserFollowButtonFragment __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment UserImage on User{id name username avatarUrl __typename}',
+        }
+
+        first_response = requests.post(PRODUCT_HUNT_GRAPHQL_API, cookies=cookies, headers=headers, json=json_data)
+
+        first_response = first_response.json()
+
+        non_followback_id_lst = []
+
+        first_followings = first_response["data"]["profile"]["following"]["edges"]
+        end_cursor = first_response["data"]["profile"]["following"]["pageInfo"]["endCursor"]
+        next_page = first_response["data"]["profile"]["following"]["pageInfo"]["hasNextPage"]
+
+        for nodes in first_followings:
+                username = nodes["node"]["username"]
+                json_data = {
+                      'operationName': 'ProfileLayoutQuery',
+                      'variables': {
+                      'username': username,
+               },
+                      'query': 'query ProfileLayoutQuery($username:String!){profile:user(username:$username){id isTrashed productsCount submittedPostsCount collectionsCount followersCount followingsCount collectionsCount username ...ProfileLayoutHeaderFragment __typename}}fragment ProfileLayoutHeaderFragment on User{id headline headerUuid isFollowingViewer isMaker isViewer name twitterUsername username visitStreak{emoji duration __typename}...KarmaBadgeFragment ...UserImage ...UserFollowButtonFragment ...UserStackPreviewFragment __typename}fragment UserImage on User{id name username avatarUrl __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment KarmaBadgeFragment on User{id karmaBadge{kind score __typename}__typename}fragment UserStackPreviewFragment on User{id username stacksCount stacks(first:3){edges{node{id product{id slug ...ProductThumbnailFragment __typename}__typename}__typename}__typename}__typename}fragment ProductThumbnailFragment on Product{id name logoUuid isNoLongerOnline __typename}',
+               }
+                res = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+                res = res.json()
+                isFollowed = res["data"]["profile"]["isFollowingViewer"]
+                if isFollowed == False:
+                      non_followback_id_lst.append(res["data"]["profile"]["id"])
+                else:
+                      pass
+
+        while(next_page == True):
+            json_data = {
+            'operationName': 'ProfileFollowingQuery',
+            'variables': {
+                'username': 'prateek_ghanghas',
+                'cursor': end_cursor,
+                'query': '',
+            },
+            'query': 'query ProfileFollowingQuery($username:String!$cursor:String){profile:user(username:$username){id isTrashed followingsCount following(first:20 after:$cursor){edges{node{id ...UserItemFragment __typename}__typename}pageInfo{endCursor hasNextPage __typename}__typename}...MetaTags __typename}}fragment MetaTags on SEOInterface{id meta{canonicalUrl creator description image mobileAppUrl oembedUrl robots title type author authorUrl __typename}__typename}fragment UserItemFragment on User{id name headline username followersCount ...UserImage ...UserFollowButtonFragment __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment UserImage on User{id name username avatarUrl __typename}',
+        }
+
+
+            response = requests.post(PRODUCT_HUNT_GRAPHQL_API, cookies=cookies, headers=headers, json=json_data)
+
+            response = response.json()
+
+            followings = response["data"]["profile"]["following"]["edges"]
+
+            end_cursor = response["data"]["profile"]["following"]["pageInfo"]["endCursor"]
+
+            next_page = response["data"]["profile"]["following"]["pageInfo"]["hasNextPage"]
+
+            for nodes in followings:
+                username = nodes["node"]["username"]
+                json_data = {
+                      'operationName': 'ProfileLayoutQuery',
+                      'variables': {
+                      'username': username,
+               },
+                      'query': 'query ProfileLayoutQuery($username:String!){profile:user(username:$username){id isTrashed productsCount submittedPostsCount collectionsCount followersCount followingsCount collectionsCount username ...ProfileLayoutHeaderFragment __typename}}fragment ProfileLayoutHeaderFragment on User{id headline headerUuid isFollowingViewer isMaker isViewer name twitterUsername username visitStreak{emoji duration __typename}...KarmaBadgeFragment ...UserImage ...UserFollowButtonFragment ...UserStackPreviewFragment __typename}fragment UserImage on User{id name username avatarUrl __typename}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}fragment KarmaBadgeFragment on User{id karmaBadge{kind score __typename}__typename}fragment UserStackPreviewFragment on User{id username stacksCount stacks(first:3){edges{node{id product{id slug ...ProductThumbnailFragment __typename}__typename}__typename}__typename}__typename}fragment ProductThumbnailFragment on Product{id name logoUuid isNoLongerOnline __typename}',
+               }
+                res = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+                res = res.json()
+                isFollowed = res["data"]["profile"]["isFollowingViewer"]
+                if isFollowed == False:
+                      non_followback_id_lst.append(res["data"]["profile"]["id"])
+                else:
+                      pass
+        df = pd.DataFrame(non_followback_id_lst, columns = ["non_followback_ids"])
+        df.to_csv(non_followback_filePath, index = False)
+
+
+
+def unfollow_id(person_id):
+      json_data = {
+    'operationName': 'UserFollowDestroy',
+    'variables': {
+        'input': {
+            'userId': person_id,
+        },
+    },
+    'query': 'mutation UserFollowDestroy($input:UserFollowDestroyInput!){response:userFollowDestroy(input:$input){node{id ...UserFollowButtonFragment __typename}__typename}}fragment UserFollowButtonFragment on User{id followersCount isFollowed __typename}',
+}
+
+      response = requests.post('https://www.producthunt.com/frontend/graphql', cookies=cookies, headers=headers, json=json_data)
+      response = response.json()
+
+      data = response["data"]["response"]["node"]["isFollowed"]
+
+      if data == False:
+         return True
+      else:
+         return False
+
+
+
 if __name__ == "__main__":
 
        days = int(input("product info for how many days? : "))
@@ -315,6 +421,9 @@ if __name__ == "__main__":
        followingsFilePath = input("Enter file path for followings here: ")
        follow_persons_followers(person_username,followersFilePath)
        follow_persons_followings(person_username,followingsFilePath)
+       non_followback_filePath = input("Enter file path for non followbacks: ")
+       unfollow_non_followbacks(non_followback_filePath)
+
 
 
 
