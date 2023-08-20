@@ -255,8 +255,6 @@ def unfollow_non_followbacks(non_followback_filePath):
 
       df = pd.read_csv(non_followback_filePath, names = col_name, header = None)
 
-      delay = random.randrange(5, 10)
-
       for i,r in df.iterrows():
                   unfollow_id(r['non_followback_ids'])
                   delay = random.randrange(5, 10)
