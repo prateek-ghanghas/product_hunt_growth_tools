@@ -258,7 +258,7 @@ def unfollow_non_followbacks(non_followback_filePath):
       delay = random.randrange(5, 10)
 
       for i,r in df.iterrows():
-            if(unfollow_id(r['non_followback_ids'])):
+                  unfollow_id(r['non_followback_ids'])
                   delay = random.randrange(5, 10)
                   time.sleep(delay)
 
