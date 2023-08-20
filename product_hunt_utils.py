@@ -209,7 +209,7 @@ def get_followings(person_username):
         json_data = {
         'operationName': 'ProfileFollowingQuery',
         'variables': {
-            'username': 'alicea_hughes',
+            'username': person_username,
             'cursor': end_cursor,
             'query': '',
         },
