@@ -288,7 +288,7 @@ def comment_on_launched_products(days):
       for dic in list:
             string = f"Congrats team {dic['product_name']} on your launch!"
 
-            create_comment(dic["id"],string)
+            create_comment(dic["product_id"],string)
 
             time.sleep(random.randrange(5,10))
 
