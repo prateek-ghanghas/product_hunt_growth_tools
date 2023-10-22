@@ -1,7 +1,7 @@
 
 # Product Hunt Growth Tool
 
-Design and developed the automation software for Product Hunt platform, enabling users to efficiently manage their interactions with other users and engage with product launches.
+Designed and developed the automation software for Product Hunt platform, enabling users to efficiently manage their interactions with other users and engage with product launches.
 
 ### What it does?
 
